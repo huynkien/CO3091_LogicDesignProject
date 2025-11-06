@@ -1,6 +1,8 @@
 "./Core/Src/button.o"
+"./Core/Src/electronic_lock.o"
 "./Core/Src/fsmc.o"
 "./Core/Src/gpio.o"
+"./Core/Src/keyboard.o"
 "./Core/Src/lcd.o"
 "./Core/Src/led_7seg.o"
 "./Core/Src/main.o"

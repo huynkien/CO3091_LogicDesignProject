@@ -56,7 +56,7 @@ void fsm_electronic_lock_run() {
 }
 
 void init_idle() {
-	// DO NOTHING
+	lcd_show_string_center(0, 0, "IDLE", BLACK, WHITE, 20, 0);
 }
 void init_receive_password_number();
 void init_receive_password_character();
@@ -73,7 +73,9 @@ void idle_receive_password_character();
 void init() {
 	// DO NOTHING
 }
-void idle();
+void idle() {
+
+}
 void receive_password_number();
 void receive_password_character();
 void process_and_control();

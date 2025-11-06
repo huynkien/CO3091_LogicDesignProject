@@ -12,8 +12,9 @@
 uint16_t timer_counter[MAX_TIMER];
 uint8_t  timer_flag[MAX_TIMER];
 
-void init_timer() {
+void timer_init() {
 	HAL_TIM_Base_Start_IT(&htim2);
+	HAL_TIM_Base_Start_IT(&htim4);
 }
 
 void setTimer(uint8_t index, uint16_t duration) {
@@ -39,6 +40,6 @@ void timerRun() {
 	}
 }
 
-void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim) {
-	timerRun();
-}
+//void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim) {
+//	timerRun();
+//}

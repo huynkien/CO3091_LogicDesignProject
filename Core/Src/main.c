@@ -25,14 +25,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "global.h"
 #include "software_timer.h"
 #include "button.h"
 #include "lcd.h"
 #include "picture.h"
-#include "global.h"
-#include "keyboard.h"
 #include "electronic_lock.h"
-#include "led_7seg.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,7 +62,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void init_system();
 /* USER CODE END 0 */
 
 /**
@@ -101,7 +99,9 @@ int main(void)
   MX_FSMC_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+  init_system();
   setTimer(SYSTEM_TIMER, 1000);
+  setTimer(LED_7SEG, 1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -109,7 +109,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  button_scan();
+	  fsm_electronic_lock_run();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -161,6 +162,22 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void init_system() {
+	timer_init();
+	button_init();
+	lcd_init();
+	lcd_clear(WHITE);
+	led_7seg_init();
+}
+
+void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim) {
+	if (htim->Instance == TIM2) {
+		timerRun();
+	} else if (htim->Instance == TIM4) {
+		led_7seg_display();
+	}
+
+}
 
 /* USER CODE END 4 */
 
