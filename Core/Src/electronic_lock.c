@@ -56,7 +56,9 @@ void fsm_electronic_lock_run() {
 }
 
 void init_idle() {
-	lcd_show_string_center(0, 0, "IDLE", BLACK, WHITE, 20, 0);
+	lcd_show_string_center(0, 0, "ELECTRONIC LOCK", WHITE, BLACK, 30, 0);
+//	lcd_show_picture(84, 30, 72, 120, gImage_door_close);
+	lcd_show_picture(0, 172, 240, 148, gImage_ini_key_num);
 }
 void init_receive_password_number();
 void init_receive_password_character();
