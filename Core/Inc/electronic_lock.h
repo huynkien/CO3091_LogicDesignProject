@@ -9,6 +9,7 @@
 #define INC_ELECTRONIC_LOCK_H_
 
 #include "main.h"
+#include "button.h"
 #include "global.h"
 #include "lcd.h"
 #include "picture.h"
@@ -16,14 +17,38 @@
 #include "software_timer.h"
 #include "led_7seg.h"
 
+extern uint8_t correct_password[4];
+extern uint8_t entered_password[4];
+
+uint8_t check_password();
+
 void fsm_electronic_lock_run();
 
-void ilde();
-void receive_password();
+void init_idle();
+void init_receive_password_number();
+void init_receive_password_character();
+void init_process_and_control();
+void init_unlock_door();
+void init_alert();
+void init_lock_door();
+void init_update_password_number();
+void init_update_password_character();
+
+void idle_receive_password_number();
+void idle_receive_password_character();
+
+void init();
+void idle();
+void receive_password_number();
+void receive_password_character();
 void process_and_control();
 void unlock_door();
 void alert();
 void lock_door();
-void update_password();
+void update_password_number();
+void update_password_character();
+
+// void keyboard_number();
+// void keyboard_character();
 
 #endif /* INC_ELECTRONIC_LOCK_H_ */

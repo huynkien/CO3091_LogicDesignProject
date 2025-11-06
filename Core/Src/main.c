@@ -29,6 +29,10 @@
 #include "button.h"
 #include "lcd.h"
 #include "picture.h"
+#include "global.h"
+#include "keyboard.h"
+#include "electronic_lock.h"
+#include "led_7seg.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -97,7 +101,7 @@ int main(void)
   MX_FSMC_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-
+  setTimer(SYSTEM_TIMER, 1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
