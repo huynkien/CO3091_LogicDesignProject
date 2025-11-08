@@ -12,11 +12,11 @@
 #include "tim.h"
 #include "gpio.h"
 
-void init_timer();
+void timer_init();
 void setTimer(uint8_t index, uint16_t duration);
 uint8_t isTimerExpired(uint8_t index);
 void timerRun();
-void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim);
+//void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim);
 
 
 #endif /* INC_SOFTWARE_TIMER_H_ */

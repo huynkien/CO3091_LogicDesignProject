@@ -13,6 +13,7 @@
 /* Functions */
 extern void led_7seg_init();
 extern void led_7seg_set_digit(int num, int position, uint8_t show_dot);
+extern void led_7seg_clear_pos(int position);
 extern void led_7seg_set_colon(uint8_t status);
 extern void led_7seg_display();
 

@@ -8,8 +8,29 @@
 
 /* Variables */
 static uint8_t led_7seg[4] = { 0, 1, 2, 3 };
-static uint8_t led_7seg_map_of_output[10] = { 0x03, 0x9f, 0x25, 0x0d, 0x99, 0x49, 0x41,
-		0x1f, 0x01, 0x09 };
+// NOTE: Segment mapping depends on board wiring. Existing digits 0-9 kept.
+// Add hex A-F patterns (common cathode assumption) to allow display of A-F.
+// Original mapping indexes 0..9. We'll extend array to 16 entries.
+// Patterns for A B C D E F chosen for readability; adjust if wiring differs.
+// 0x77 A, 0x7C b, 0x39 C, 0x5E d, 0x79 E, 0x71 F (typical). We may choose uppercase style approximations.
+static uint8_t led_7seg_map_of_output[16] = {
+	0x03, // 0
+	0x9f, // 1
+	0x25, // 2
+	0x0d, // 3
+	0x99, // 4
+	0x49, // 5
+	0x41, // 6
+	0x1f, // 7
+	0x01, // 8
+	0x09, // 9
+	0x11, // A
+	0xC1, // b (lowercase)
+	0x63, // C
+	0x85, // d (lowercase)
+	0x61, // E
+	0x71  // F
+};
 static uint16_t led_7seg_index = 0;
 static uint16_t spi_buffer = 0xffff;
 
@@ -69,9 +90,23 @@ void led_7seg_display() {
  * @retval 	None
  */
 void led_7seg_set_digit(int num, int position, uint8_t show_dot) {
-	if (num >= 0 && num <= 9) {
-		led_7seg[position] = led_7seg_map_of_output[num] - show_dot;
+	if (position < 0 || position > 3) return;
+	if (num < 0) num = 0;
+	if (num > 15) num = num % 16; // wrap
+	uint8_t seg = led_7seg_map_of_output[num];
+	if (show_dot) {
+		// assume dot is LSB cleared when active like previous code using '- show_dot'
+		if (seg > 0) seg -= 1; // replicate prior behavior
 	}
+	led_7seg[position] = seg;
+}
+
+void led_7seg_clear_pos(int position) {
+	if (position < 0 || position > 3) return;
+	// Set all segments off for this position (blank). Assuming 0xFF turns all segments off in this wiring.
+	// If your wiring is active-low for segments, 0xFF will turn them off (no segment lit).
+	// Adjust if necessary after visual test.
+	led_7seg[position] = 0xFF;
 }
 
 /**

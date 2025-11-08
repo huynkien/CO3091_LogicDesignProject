@@ -40,7 +40,7 @@
 #define NUMBER_9					39
 
 // NO BUTTON / invalid buffer value
-#define NO_BUTTON                   255
+#define NO_SIGNAL                   255
 
 // KEYBOARD CHARACTER
 #define CHARACTER_A					40
@@ -64,13 +64,14 @@
 // TIMER
 #define SYSTEM_TIMER			0
 #define LED_7SEG				1
-#define TIMER_10S				2
+#define TIMER_15S				2
 #define TIMER_30S				3
 
-#define TIME_10S				10000
+#define TIME_15S				15000
+#define TIME_30S 				30000
 
 extern uint8_t electronic_lock_state;
 extern uint8_t keyboard_state;
-extern uint8_t keyboard_button_buf;
+extern uint8_t keyboard_butbuf;
 
 #endif /* INC_GLOBAL_H_ */

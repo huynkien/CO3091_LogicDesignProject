@@ -13,7 +13,7 @@
 #include "global.h"
 #include "lcd.h"
 #include "picture.h"
-#include "keyboard.h"
+//#include "keyboard.h"
 #include "software_timer.h"
 #include "led_7seg.h"
 
@@ -48,7 +48,12 @@ void lock_door();
 void update_password_number();
 void update_password_character();
 
-// void keyboard_number();
-// void keyboard_character();
+//// PROCESS USER INPUT
+//void keyboard_number();
+//void keyboard_character();
+
+//// Function to process password
+//void pw_delete();
+//void pw_delete_all();
 
 #endif /* INC_ELECTRONIC_LOCK_H_ */

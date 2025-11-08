@@ -100,6 +100,7 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   init_system();
+
   setTimer(SYSTEM_TIMER, 1000);
   setTimer(LED_7SEG, 1000);
   /* USER CODE END 2 */
@@ -168,6 +169,10 @@ void init_system() {
 	lcd_init();
 	lcd_clear(WHITE);
 	led_7seg_init();
+	for (int i = 0; i < 4; ++i) {
+		entered_password[i] = 0;
+		led_7seg_clear_pos(i);
+	}
 }
 
 void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim) {
