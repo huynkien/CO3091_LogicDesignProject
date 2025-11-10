@@ -42,13 +42,22 @@ void fsm_electronic_lock_run() {
 			process_and_control();
 			break;
 		case UNLOCK_DOOR:
-
+			unlock_door();
+			break;
+		case DOOR_OPEN:
+			door_open();
+			break;
+		case DOOR_CLOSE:
+			door_close();
 			break;
 		case ALERT:
-
+			alert();
 			break;
 		case LOCK_DOOR:
-
+			lock_door();
+			break;
+		case PASSWORD_INCORRECT:
+			password_incorrect();
 			break;
 		case UPDATE_PASSWORD_NUMBER:
 
@@ -82,16 +91,25 @@ static void read_edges(uint8_t edges[16]) {
 	}
 }
 
+uint8_t check_password() {
+	for(uint8_t i = 0; i < 4; i++) {
+		if (correct_password[i] != entered_password[i]) {
+			return 0;
+		}
+	}
+	return 1;
+}
 
 void init_idle() {
 	lcd_fill(0, 0, 240, 20, WHITE);
+	lcd_fill(0, 150, 240, 170, WHITE);
 	lcd_show_string_center(0, 0, "IDLE", BLACK, WHITE, 16, 0);
 	lcd_show_picture(84, 30, 72, 120, gImage_door_close);
 	lcd_show_picture(0, 172, 240, 148, gImage_ini_key_num);
+	lcd_show_picture(195, 75, 30, 30, gImage_locked);
 
 	keyboard_state = KEYBOARD_NUMBER;
 	idle_first_input = 1;
-
 }
 void init_receive_password_number() {
 	lcd_fill(0, 0, 240, 20, WHITE);
@@ -108,13 +126,55 @@ void init_receive_password_character() {
 void init_process_and_control() {
 	lcd_fill(0, 0, 240, 20, WHITE);
 	lcd_show_string_center(0, 0, "PROCESS AND CONTROL", BLACK, WHITE, 16, 0);
-	lcd_show_picture(84, 30, 72, 120, gImage_door_close);
-//	lcd_show_picture(0, 172, 240, 148, gImage_ini_key_num);
+	lcd_show_picture(195, 75, 30, 30, gImage_locked);
+
+	electronic_lock_state = PROCESS_AND_CONTROL;
+	setTimer(SYSTEM_TIMER, 1000);
 }
 
 void init_unlock_door() {
-	//Do nothing
+	lcd_fill(0, 0, 240, 20, WHITE);
+	lcd_fill(84, 30, 177, 153, WHITE);
+	lcd_show_string_center(0, 0, "UNLOCK DOOR", BLACK, WHITE, 16, 0);
+	lcd_show_picture(195, 75, 30, 30, gImage_unlocked);
+	lcd_show_picture(84, 30, 72, 120, gImage_door_close);
 }
+
+void init_door_open() {
+	lcd_fill(0, 0, 240, 20, WHITE);
+	lcd_fill(84, 30, 177, 153, WHITE);
+	lcd_fill(0, 150, 240, 170, WHITE);
+	lcd_show_string_center(0, 0, "DOOR OPEN", BLACK, WHITE, 16, 0);
+	lcd_show_picture(195, 75, 30, 30, gImage_unlocked);
+	lcd_show_picture(84, 30, 93, 123, gImage_door_open);
+}
+
+void init_door_close() {
+	lcd_fill(0, 0, 240, 20, WHITE);
+	lcd_fill(84, 30, 177, 153, WHITE);
+	lcd_fill(30, 75, 60, 105, WHITE);
+	lcd_show_string_center(0, 0, "DOOR CLOSE", BLACK, WHITE, 16, 0);
+	lcd_show_picture(195, 75, 30, 30, gImage_unlocked);
+	lcd_show_picture(84, 30, 72, 120, gImage_door_close);
+}
+
+void init_alert() {
+	lcd_fill(0, 0, 240, 20, WHITE);
+	lcd_fill(84, 30, 177, 153, WHITE);
+	lcd_show_string_center(0, 0, "ALERT! DOOR NOT CLOSED", RED, WHITE, 16, 0);
+	lcd_show_picture(30, 75, 30, 29, gImage_alert);
+	lcd_show_picture(195, 75, 30, 30, gImage_unlocked);
+	lcd_show_picture(84, 30, 93, 123, gImage_door_open);
+}
+
+void init_lock_door() {
+	lcd_fill(0, 0, 240, 20, WHITE);
+	lcd_fill(84, 30, 177, 153, WHITE);
+	lcd_show_string_center(0, 0, "LOCKING DOOR", BLACK, WHITE, 16, 0);
+	lcd_show_picture(195, 75, 30, 30, gImage_locked);
+	lcd_show_picture(84, 30, 72, 120, gImage_door_close);
+}
+
 void init_alert();
 void init_lock_door();
 void init_update_password_number();
@@ -133,7 +193,8 @@ void init() {
 }
 
 void idle() {
-	// Show current keyboard picture
+//	lcd_fill(0, 150, 240, 20, WHITE);
+
 	if (keyboard_state == KEYBOARD_NUMBER) {
 		lcd_show_picture(0, 172, 240, 148, gImage_ini_key_num);
 	} else {
@@ -328,7 +389,6 @@ void receive_password_character() {
 		if (entered_index > 0) {
 			entered_index--;
 			entered_password[entered_index] = 0;
-			// Blank deleted position
 			led_7seg_clear_pos(entered_index);
 		}
 		processed = 1;
@@ -350,12 +410,140 @@ void receive_password_character() {
 
 	setTimer(SYSTEM_TIMER, 100);
 }
-void process_and_control() {
 
+//count incorrect time
+uint8_t wrong_counter = 0;
+
+void process_and_control() {
+	if (!isTimerExpired(SYSTEM_TIMER)) return;
+	
+	if (check_password()) {
+		// Password correct
+		lcd_fill(0, 150, 240, 20, WHITE);
+		lcd_show_string_center(0, 150, "PASSWORD CORRECT", BLACK, WHITE, 16, 0);
+		wrong_counter = 0;
+		setTimer(SYSTEM_TIMER, 1500);
+		electronic_lock_state = UNLOCK_DOOR;
+		init_unlock_door();
+		setTimer(TIMER_10S, TIME_10S);
+		setTimer(TIMER_30S, TIME_30S);
+	} else {
+		lcd_fill(0, 150, 240, 20, WHITE);
+		lcd_show_string_center(0, 150, "PASSWORD INCORRECT", RED, WHITE, 16, 0);
+		wrong_counter++;
+		setTimer(SYSTEM_TIMER, 1500); // Wait 1.5s before returning to IDLE
+		electronic_lock_state = PASSWORD_INCORRECT;
+	}
 }
-void unlock_door();
-void alert();
-void lock_door();
+
+void password_incorrect() {
+	// Wait 1.5s then return to IDLE
+	if (!isTimerExpired(SYSTEM_TIMER)) return;
+	
+	reset_inputs();
+	init_idle();
+	electronic_lock_state = IDLE;
+	setTimer(SYSTEM_TIMER, 100);
+}
+
+void unlock_door() {
+	if (!isTimerExpired(SYSTEM_TIMER)) return;
+	
+	uint8_t e[16];
+	read_edges(e);
+	
+	// Check if user pressed OPEN_DOOR button
+	if (e[15]) {
+		// User pressed open door button
+		init_door_open();
+		electronic_lock_state = DOOR_OPEN;
+		setTimer(TIMER_30S, TIME_30S); // Reset 30s timer for door closing
+		setTimer(SYSTEM_TIMER, 100);
+		return;
+	}
+	
+	// Check if 10s expired without pressing open door button
+	if (isTimerExpired(TIMER_10S)) {
+		// Lock door again and return to IDLE
+		init_lock_door();
+		electronic_lock_state = LOCK_DOOR;
+		setTimer(SYSTEM_TIMER, 2000); // Stay in LOCK_DOOR for 2s
+		return;
+	}
+	
+	setTimer(SYSTEM_TIMER, 100);
+}
+
+void door_open() {
+	if (!isTimerExpired(SYSTEM_TIMER)) return;
+	
+	uint8_t e[16];
+	read_edges(e);
+	
+	if (e[15]) {
+		// User closed door
+		init_door_close();
+		electronic_lock_state = DOOR_CLOSE;
+		setTimer(SYSTEM_TIMER, 100); // Poll for button[11] press
+		return;
+	}
+	
+	// Check if 30s expired without closing door
+	if (isTimerExpired(TIMER_30S)) {
+		// Alert: door not closed in time
+		init_alert();
+		electronic_lock_state = ALERT;
+		setTimer(SYSTEM_TIMER, 100);
+		return;
+	}
+	
+	setTimer(SYSTEM_TIMER, 100);
+}
+
+void door_close() {
+	if (!isTimerExpired(SYSTEM_TIMER)) return;
+	
+	uint8_t e[16];
+	read_edges(e);
+	
+	// Wait for user to press button[11] to lock the door
+	if (e[11]) {
+		init_lock_door();
+		electronic_lock_state = LOCK_DOOR;
+		setTimer(SYSTEM_TIMER, 2000);
+		return;
+	}
+	
+	setTimer(SYSTEM_TIMER, 100);
+}
+
+void alert() {
+	if (!isTimerExpired(SYSTEM_TIMER)) return;
+	
+	uint8_t e[16];
+	read_edges(e);
+	
+	// Wait for user to close door
+	if (e[15]) {
+		// User closed door
+		init_door_close();
+		electronic_lock_state = DOOR_CLOSE;
+		setTimer(SYSTEM_TIMER, 100); // Poll for button[11] press
+		return;
+	}
+	
+	setTimer(SYSTEM_TIMER, 100);
+}
+
+void lock_door() {
+	if (!isTimerExpired(SYSTEM_TIMER)) return;
+	
+	reset_inputs();
+	init_idle();
+	electronic_lock_state = IDLE;
+	setTimer(SYSTEM_TIMER, 100);
+}
+
 void update_password_number();
 void update_password_character();
 

@@ -29,6 +29,8 @@ void init_receive_password_number();
 void init_receive_password_character();
 void init_process_and_control();
 void init_unlock_door();
+void init_door_open();
+void init_door_close();
 void init_alert();
 void init_lock_door();
 void init_update_password_number();
@@ -43,17 +45,12 @@ void receive_password_number();
 void receive_password_character();
 void process_and_control();
 void unlock_door();
+void door_open();
+void door_close();
 void alert();
 void lock_door();
+void password_incorrect();
 void update_password_number();
 void update_password_character();
-
-//// PROCESS USER INPUT
-//void keyboard_number();
-//void keyboard_character();
-
-//// Function to process password
-//void pw_delete();
-//void pw_delete_all();
 
 #endif /* INC_ELECTRONIC_LOCK_H_ */

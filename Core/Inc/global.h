@@ -16,10 +16,13 @@
 #define RECEIVE_PASSWORD_CHARACTER	3
 #define PROCESS_AND_CONTROL			4
 #define UNLOCK_DOOR					5
-#define ALERT						6
-#define LOCK_DOOR					7
-#define UPDATE_PASSWORD_NUMBER		8
-#define UPDATE_PASSWORD_CHARACTER	9
+#define DOOR_OPEN					6
+#define DOOR_CLOSE					7
+#define ALERT						8
+#define LOCK_DOOR					9
+#define PASSWORD_INCORRECT			10
+#define UPDATE_PASSWORD_NUMBER		11
+#define UPDATE_PASSWORD_CHARACTER	12
 
 // KEYBOARD
 #define KEYBOARD_NUMBER				20
@@ -66,7 +69,9 @@
 #define LED_7SEG				1
 #define TIMER_15S				2
 #define TIMER_30S				3
+#define TIMER_10S				4
 
+#define TIME_10S				10000
 #define TIME_15S				15000
 #define TIME_30S 				30000
 
