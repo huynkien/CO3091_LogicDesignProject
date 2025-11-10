@@ -147,7 +147,7 @@ void idle() {
 
 	if (e[12]) {
 		keyboard_state = (keyboard_state == KEYBOARD_NUMBER) ? KEYBOARD_CHARACTER : KEYBOARD_NUMBER;
-		setTimer(SYSTEM_TIMER, 20);
+		setTimer(SYSTEM_TIMER, 100);
 		return;
 	}
 
@@ -173,11 +173,11 @@ void idle() {
 				led_7seg_clear_pos(i);
 			}
 
-			entered_password[0] = (uint8_t)digit;
+			entered_password[0] = digit;
 			led_7seg_set_digit(digit, 0, 0);
 			entered_index = 1;
 			electronic_lock_state = RECEIVE_PASSWORD_NUMBER;
-			setTimer(SYSTEM_TIMER, 10);
+			setTimer(SYSTEM_TIMER, 100);
 			setTimer(TIMER_15S, TIME_15S);
 			return;
 		}
@@ -199,7 +199,7 @@ void idle() {
 				led_7seg_clear_pos(i);
 			}
 
-			entered_password[0] = (uint8_t)character;
+			entered_password[0] = character;
 			led_7seg_set_digit(character, 0, 0);
 			entered_index = 1;
 			electronic_lock_state = RECEIVE_PASSWORD_CHARACTER;
@@ -209,7 +209,7 @@ void idle() {
 		}
 	}
 
-	setTimer(SYSTEM_TIMER, 20);
+	setTimer(SYSTEM_TIMER, 100);
 }
 
 void receive_password_number() {
@@ -230,7 +230,7 @@ void receive_password_number() {
 		init_receive_password_character();
 		keyboard_state = KEYBOARD_CHARACTER;
 		electronic_lock_state = RECEIVE_PASSWORD_CHARACTER;
-		setTimer(SYSTEM_TIMER, 10);
+		setTimer(SYSTEM_TIMER, 100);
 		setTimer(TIMER_15S, TIME_15S);
 		return;
 	}
@@ -238,7 +238,7 @@ void receive_password_number() {
 	uint8_t processed = 0;
 	// digits
 	int digit = -1;
-	if (e[13]  == 1) digit = 0;
+	if (e[13] == 1) digit = 0;
 	else if (e[0] == 1) digit = 1;
 	else if (e[1] == 1) digit = 2;
 	else if (e[2] == 1) digit = 3;
@@ -250,7 +250,7 @@ void receive_password_number() {
 	else if (e[10] == 1) digit = 9;
 	if (digit >= 0) {
 		if (entered_index < 4) {
-			entered_password[entered_index] = (uint8_t)digit;
+			entered_password[entered_index] = digit;
 			led_7seg_set_digit(digit, entered_index, 0);
 			entered_index++;
 		}
@@ -281,7 +281,7 @@ void receive_password_number() {
 		return;
 	}
 
-	setTimer(SYSTEM_TIMER, 10);
+	setTimer(SYSTEM_TIMER, 100);
 }
 
 void receive_password_character() {
@@ -302,7 +302,7 @@ void receive_password_character() {
 		init_receive_password_number();
 		keyboard_state = KEYBOARD_NUMBER;
 		electronic_lock_state = RECEIVE_PASSWORD_NUMBER;
-		setTimer(SYSTEM_TIMER, 10);
+		setTimer(SYSTEM_TIMER, 100);
 		setTimer(TIMER_15S, TIME_15S);
 		return;
 	}
@@ -317,7 +317,7 @@ void receive_password_character() {
 	else if (e[6] == 1) character = 15; // F
 	if (character >= 0) {
 		if (entered_index < 4) {
-			entered_password[entered_index] = (uint8_t)character;
+			entered_password[entered_index] = character;
 			led_7seg_set_digit(character, entered_index, 0);
 			entered_index++;
 		}
@@ -348,7 +348,7 @@ void receive_password_character() {
 		return;
 	}
 
-	setTimer(SYSTEM_TIMER, 10);
+	setTimer(SYSTEM_TIMER, 100);
 }
 void process_and_control() {
 
