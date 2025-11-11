@@ -6,6 +6,7 @@
  */
 
 #include "electronic_lock.h"
+#include "led_7seg.h"
 
 uint8_t electronic_lock_state = INIT;
 uint8_t keyboard_state = KEYBOARD_NUMBER;
@@ -16,6 +17,10 @@ uint8_t entered_index = 0;
 uint8_t entered_password[4] = {0};
 
 uint8_t idle_first_input = 1;
+
+//update password
+uint8_t update_stage = 0;
+uint8_t new_password[4] = {0};
 
 void fsm_electronic_lock_run() {
 	switch(electronic_lock_state) {
@@ -59,17 +64,17 @@ void fsm_electronic_lock_run() {
 		case PASSWORD_INCORRECT:
 			password_incorrect();
 			break;
-		case UPDATE_PASSWORD_NUMBER:
-
-			break;
-		case UPDATE_PASSWORD_CHARACTER:
-
-			break;
 			//lockout
 		case LOCK_OUT:
 			lockout();
 			break;
-
+		case UPDATE_PASSWORD_NUMBER:
+			update_password_number();
+			break;
+		case UPDATE_PASSWORD_CHARACTER:
+			keyboard_state = KEYBOARD_NUMBER;
+			electronic_lock_state = UPDATE_PASSWORD_NUMBER;
+			break;
 		default:
 			break;
 	}
@@ -180,10 +185,21 @@ void init_lock_door() {
 	lcd_show_picture(84, 30, 72, 120, gImage_door_close);
 }
 
-void init_alert();
-void init_lock_door();
 void init_update_password_number();
 void init_update_password_character();
+
+void init_update_password(){
+	if(electronic_lock_state == LOCK_OUT) return;
+	update_stage = 0;
+	reset_inputs();
+	lcd_fill(0, 0, 240, 20, WHITE);
+	lcd_fill(0, 150, 240, 170, WHITE);
+	lcd_show_string_center(0, 0, "CHANGE PASSWORD", BLACK, WHITE, 16, 0);
+	lcd_show_string_center(0, 150, "ENTER OLD PASSWORD", BLACK, WHITE, 16, 0);
+	keyboard_state = KEYBOARD_NUMBER;
+	electronic_lock_state = UPDATE_PASSWORD_NUMBER;
+	setTimer(SYSTEM_TIMER, 100);
+}
 
 void idle_receive_password_number() {
 
@@ -210,6 +226,11 @@ void idle() {
 
 	uint8_t e[16];
 	read_edges(e);
+
+	if(e[14]){
+		init_update_password();
+		return;
+	}
 
 	if (e[12]) {
 		keyboard_state = (keyboard_state == KEYBOARD_NUMBER) ? KEYBOARD_CHARACTER : KEYBOARD_NUMBER;
@@ -417,9 +438,26 @@ void receive_password_character() {
 }
 
 //count incorrect time
-uint8_t wrong_counter = 0;
+static uint8_t wrong_counter = 0;
 uint8_t lock_level = 0;
 uint32_t lockout_remaining_ms = 0;
+
+void show_7SEGMENT(uint16_t seconds){
+	int d0 = seconds%10;
+	seconds /= 10;
+	int d1 = seconds%10;
+	seconds /= 10;
+	int d2 = seconds%10;
+	seconds /= 10;
+	int d3 = seconds;
+	if(d3 > 0) led_7seg_set_digit(d3, 0, 0);
+	else led_7seg_clear_pos(0);
+	if(d3 > 0 || d2 > 0) led_7seg_set_digit(d2, 1, 0);
+	else led_7seg_clear_pos(1);
+	if(d3>0 || d2>0 || d1>0) led_7seg_set_digit(d1, 2, 0);
+	else led_7seg_clear_pos(2);
+	led_7seg_set_digit(d0, 3, 0);
+}
 
 void process_and_control() {
 	if (!isTimerExpired(SYSTEM_TIMER)) return;
@@ -429,6 +467,7 @@ void process_and_control() {
 		lcd_fill(0, 150, 240, 20, WHITE);
 		lcd_show_string_center(0, 150, "PASSWORD CORRECT", BLACK, WHITE, 16, 0);
 		wrong_counter = 0;
+		lock_level = 0;
 		setTimer(SYSTEM_TIMER, 1500);
 		electronic_lock_state = UNLOCK_DOOR;
 		init_unlock_door();
@@ -462,6 +501,8 @@ void password_incorrect() {
 
 void init_lockout(uint32_t ms){
 	lockout_remaining_ms = ms;
+	uint16_t seconds = (lockout_remaining_ms + 999) / 1000;
+	show_7SEGMENT(seconds);
 	lcd_fill(0, 0, 240, 20, WHITE);
     lcd_fill(0, 150, 240, 170, WHITE);
     lcd_show_string_center(0, 0,  "LOCKED", RED, WHITE, 16, 0);
@@ -473,16 +514,16 @@ void lockout(){
 	if(!isTimerExpired(SYSTEM_TIMER)) return;
 	if(lockout_remaining_ms >= 1000){
 		lockout_remaining_ms -= 1000;
+		uint16_t seconds = (lockout_remaining_ms + 999) / 1000;
+		show_7SEGMENT(seconds);
+		setTimer(SYSTEM_TIMER, 1000);
 	}
-	if(lockout_remaining_ms == 0){
-		wrong_counter = 0;
+	else{
+		lockout_remaining_ms = 0;
 		reset_inputs();
 		init_idle();
 		electronic_lock_state = IDLE;
 		setTimer(SYSTEM_TIMER, 100);
-	}
-	else{
-		setTimer(SYSTEM_TIMER, 1000);
 	}
 }
 
@@ -584,6 +625,92 @@ void lock_door() {
 	setTimer(SYSTEM_TIMER, 100);
 }
 
-void update_password_number();
+static int get_digit_from_edges(uint8_t e[16]){
+    if (e[0]) return 1;
+    if (e[1]) return 2;
+    if (e[2]) return 3;
+    if (e[4]) return 4;
+    if (e[5]) return 5;
+    if (e[6]) return 6;
+    if (e[8]) return 7;
+    if (e[9]) return 8;
+    if (e[10]) return 9;
+    if (e[13]) return 0;
+    return -1;
+}
+
+void update_password_number(){
+	if(!isTimerExpired(SYSTEM_TIMER)) return;
+	uint8_t e[16];
+	read_edges(e);
+	if (e[14]) {
+		reset_inputs();
+		init_idle();
+		electronic_lock_state = IDLE;
+		setTimer(SYSTEM_TIMER, 100);
+		return;
+	}
+	if(e[3]){
+		if(entered_index > 0){
+			entered_index--;
+			entered_password[entered_index] = 0;
+			led_7seg_clear_pos(entered_index);
+		}
+		setTimer(SYSTEM_TIMER, 100);
+		return;
+	}
+	if(e[7]){
+		reset_inputs();
+		setTimer(SYSTEM_TIMER, 100);
+		return;
+	}
+	int d = get_digit_from_edges(e);
+	if(d >= 0 && entered_index < 4){
+		entered_password[entered_index] = (uint8_t)d;
+		led_7seg_set_digit(d, entered_index, 0);
+		entered_index++;
+		setTimer(TIMER_15S, TIMER_15S);
+	}
+	if(entered_index >= 4){
+		if(update_stage == 0){
+			if(check_password()){
+				reset_inputs();
+				update_stage = 1;
+				lcd_fill(0, 0, 240, 20, WHITE);
+				lcd_fill(0, 150, 240, 170, WHITE);
+				lcd_show_string_center(0, 0,  "ENTER NEW PASSWORD", RED, WHITE, 16, 0);
+				lcd_show_string_center(0, 150, "4 DIGITS", BLACK, WHITE, 16, 0);
+			}else{
+				lcd_fill(0, 0, 240, 20, WHITE);
+				lcd_fill(0, 150, 240, 170, WHITE);
+				lcd_show_string_center(0, 0,  "OLD PASSWORD WRONG", RED, WHITE, 16, 0);
+				lcd_show_string_center(0, 150, "ENTER OLD PASSWORD AGAIN", BLACK, WHITE, 16, 0);
+			}
+		} else{
+			for(int i=0; i<4; i++){
+				correct_password[i] = entered_password[i];
+			}
+			wrong_counter = 0;
+			lcd_fill(0, 0, 240, 20, WHITE);
+			lcd_fill(0, 150, 240, 170, WHITE);
+			lcd_show_string_center(0, 0,  "PASSWORD UPDATED", RED, WHITE, 16, 0);
+			lcd_show_string_center(0, 150, "SUCESS", BLACK, WHITE, 16, 0);
+			setTimer(SYSTEM_TIMER, 1500);
+			electronic_lock_state = IDLE;
+			reset_inputs();
+			init_idle();
+			return;
+		}
+	}
+	 if (isTimerExpired(TIMER_15S)) {
+		reset_inputs();
+		init_idle();
+		electronic_lock_state = IDLE;
+		return;
+	}
+
+	setTimer(SYSTEM_TIMER, 100);
+}
+
 void update_password_character();
 

@@ -32,7 +32,7 @@ Core/Src/electronic_lock.o: ../Core/Src/electronic_lock.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Core/Inc/button.h ../Core/Inc/global.h ../Core/Inc/lcd.h \
  ../Core/Inc/gpio.h ../Core/Inc/picture.h ../Core/Inc/software_timer.h \
- ../Core/Inc/tim.h ../Core/Inc/led_7seg.h
+ ../Core/Inc/tim.h ../Core/Inc/led_7seg.h ../Core/Inc/led_7seg.h
 ../Core/Inc/electronic_lock.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -72,4 +72,5 @@ Core/Src/electronic_lock.o: ../Core/Src/electronic_lock.c \
 ../Core/Inc/picture.h:
 ../Core/Inc/software_timer.h:
 ../Core/Inc/tim.h:
+../Core/Inc/led_7seg.h:
 ../Core/Inc/led_7seg.h:

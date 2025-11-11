@@ -52,6 +52,12 @@ default.size.stdout \
 OBJDUMP_LIST += \
 LogicDesignProject.list \
 
+OBJCOPY_HEX += \
+LogicDesignProject.hex \
+
+OBJCOPY_BIN += \
+LogicDesignProject.bin \
+
 
 # All Target
 all: main-build
@@ -60,8 +66,8 @@ all: main-build
 main-build: LogicDesignProject.elf secondary-outputs
 
 # Tool invocations
-LogicDesignProject.elf LogicDesignProject.map: $(OBJS) $(USER_OBJS) D:\CO3091_LogicDesignProject-NewELS\CO3091_LogicDesignProject-NewELS\STM32F407ZETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "LogicDesignProject.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\CO3091_LogicDesignProject-NewELS\CO3091_LogicDesignProject-NewELS\STM32F407ZETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LogicDesignProject.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+LogicDesignProject.elf LogicDesignProject.map: $(OBJS) $(USER_OBJS) D:\MinhHung\CO3091_LogicDesignProject\STM32F407ZETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "LogicDesignProject.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\MinhHung\CO3091_LogicDesignProject\STM32F407ZETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LogicDesignProject.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -75,12 +81,22 @@ LogicDesignProject.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DE
 	@echo 'Finished building: $@'
 	@echo ' '
 
+LogicDesignProject.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "LogicDesignProject.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
+LogicDesignProject.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "LogicDesignProject.bin"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) LogicDesignProject.elf LogicDesignProject.list LogicDesignProject.map default.size.stdout
+	-$(RM) LogicDesignProject.bin LogicDesignProject.elf LogicDesignProject.hex LogicDesignProject.list LogicDesignProject.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX) $(OBJCOPY_BIN)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

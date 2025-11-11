@@ -56,5 +56,10 @@ void update_password_character();
 //Thử trường hợp lockout
 void init_lockout(uint32_t ms);
 void lockout();
+void Show_7SEGMENT(uint16_t seconds);
+
+//update password
+void init_update_password();
+
 
 #endif /* INC_ELECTRONIC_LOCK_H_ */
