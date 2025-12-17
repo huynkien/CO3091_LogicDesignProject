@@ -23,6 +23,8 @@ uint8_t idle_first_input = 1;
 uint8_t update_stage = 0;
 uint8_t new_password[4] = {0};
 
+static uint8_t password_notify_active = 0;
+
 void fsm_electronic_lock_run() {
 	switch(electronic_lock_state) {
 		case INIT:
@@ -34,15 +36,16 @@ void fsm_electronic_lock_run() {
 			break;
 		case IDLE:
 			idle();
+			// add "PLEASE ENTER PASSWORD!"
 
 			break;
 		case RECEIVE_PASSWORD_NUMBER:
 			receive_password_number();
-
+			// add "PLEASE COMPLETE PASSWORD!"
 			break;
 		case RECEIVE_PASSWORD_CHARACTER:
 			receive_password_character();
-
+			// add "PLEASE COMPLETE PASSWORD!"
 			break;
 		case PROCESS_AND_CONTROL:
 			process_and_control();
@@ -55,6 +58,7 @@ void fsm_electronic_lock_run() {
 			break;
 		case DOOR_CLOSE:
 			door_close();
+			//add quay lai open door
 			break;
 		case ALERT:
 			alert();
@@ -129,18 +133,21 @@ void init_idle() {
 	idle_first_input = 1;
 }
 void init_receive_password_number() {
+	clear_notify();
 	lcd_fill(0, 0, 240, 20, BLACK);
 	lcd_show_string_center(0, 0, "RECEIVE PASSWORD NUMBER", LIGHTBLUE, BLACK, 16, 0);
 	lcd_show_picture(84, 30, 72, 120, gImage_door_close);
 	lcd_show_picture(0, 172, 240, 148, gImage_ini_key_num);
 }
 void init_receive_password_character() {
+	clear_notify();
 	lcd_fill(0, 0, 240, 20, BLACK);
 	lcd_show_string_center(0, 0, "RECEIVE PASSWORD CHARACTER", LIGHTBLUE, BLACK, 16, 0);
 	lcd_show_picture(84, 30, 72, 120, gImage_door_close);
 	lcd_show_picture(0, 172, 240, 148, gImage_ini_key_char);
 }
 void init_process_and_control() {
+
 	lcd_fill(0, 0, 240, 20, BLACK);
 	lcd_show_string_center(0, 0, "PROCESS AND CONTROL", LIGHTBLUE, BLACK, 16, 0);
 	lcd_show_picture(195, 75, 30, 30, gImage_locked);
@@ -233,10 +240,23 @@ void idle() {
 
 	if (!isTimerExpired(SYSTEM_TIMER)) return;
 
+	if(isTimerExpired(TIMER_PASSWORD_NOTIFY) && password_notify_active){
+		clear_notify();
+		return;
+	}
+
 	uint8_t e[16];
 	read_edges(e);
+	//yeu cau password open door
+	if(e[15]){
+		notify_password_not_ready();
+		setTimer(SYSTEM_TIMER, 100);
+		return;
+	}
+
 
 	if(e[14]){
+		clear_notify();
 		super_init_change_password_number();
 		electronic_lock_state = CHANGE_PASSWORD_NUMBER;
 		setTimer(SYSTEM_TIMER, 100);
@@ -244,6 +264,7 @@ void idle() {
 	}
 
 	if (e[12]) {
+		clear_notify();
 		keyboard_state = (keyboard_state == KEYBOARD_NUMBER) ? KEYBOARD_CHARACTER : KEYBOARD_NUMBER;
 		setTimer(SYSTEM_TIMER, 100);
 		return;
@@ -320,6 +341,11 @@ void receive_password_number() {
 
 	if (!isTimerExpired(SYSTEM_TIMER)) return;
 
+	if(isTimerExpired(TIMER_PASSWORD_NOTIFY) && password_notify_active){
+		clear_notify();
+		return;
+	}
+
 	uint8_t e[16];
 	read_edges(e);
 
@@ -330,6 +356,12 @@ void receive_password_number() {
 		electronic_lock_state = RECEIVE_PASSWORD_CHARACTER;
 		setTimer(SYSTEM_TIMER, 100);
 		setTimer(TIMER_15S, TIME_15S);
+		return;
+	}
+
+	if(e[15]){
+		notify_password_not_ready();
+		setTimer(SYSTEM_TIMER, 100);
 		return;
 	}
 
@@ -392,6 +424,11 @@ void receive_password_character() {
 
 	if (!isTimerExpired(SYSTEM_TIMER)) return;
 
+	if(isTimerExpired(TIMER_PASSWORD_NOTIFY) && password_notify_active){
+		clear_notify();
+		return;
+	}
+
 	uint8_t e[16];
 	read_edges(e);
 
@@ -402,6 +439,12 @@ void receive_password_character() {
 		electronic_lock_state = RECEIVE_PASSWORD_NUMBER;
 		setTimer(SYSTEM_TIMER, 100);
 		setTimer(TIMER_15S, TIME_15S);
+		return;
+	}
+
+	if(e[15]){
+		notify_password_not_ready();
+		setTimer(SYSTEM_TIMER, 100);
 		return;
 	}
 
@@ -483,7 +526,8 @@ void process_and_control() {
 	
 	if (check_password()) {
 		// Password correct
-		lcd_fill(0, 150, 240, 20, BLACK);
+		clear_notify();
+		//lcd_fill(0, 150, 240, 20, BLACK);
 		lcd_show_string_center(0, 150, "PASSWORD CORRECT", GREEN, BLACK, 16, 0);
 		wrong_counter = 0;
 		lock_level = 0;
@@ -493,7 +537,8 @@ void process_and_control() {
 		setTimer(TIMER_10S, TIME_10S);
 		setTimer(TIMER_30S, TIME_30S);
 	} else {
-		lcd_fill(0, 150, 240, 20, BLACK);
+		clear_notify();
+		//lcd_fill(0, 150, 240, 20, BLACK);
 		lcd_show_string_center(0, 150, "PASSWORD INCORRECT", RED, BLACK, 16, 0);
 		wrong_counter++;
 		setTimer(SYSTEM_TIMER, 1500); // Wait 1.5s before returning to IDLE
@@ -643,6 +688,15 @@ void door_close() {
 		return;
 	}
 	
+	if (e[15]) {
+		// User pressed open door button
+		init_door_open();
+		electronic_lock_state = DOOR_OPEN;
+		setTimer(TIMER_30S, TIME_30S); // Reset 30s timer for door closing
+		setTimer(SYSTEM_TIMER, 100);
+		return;
+	}
+
 	setTimer(SYSTEM_TIMER, 100);
 }
 
@@ -1063,3 +1117,21 @@ void change_password_character() {
 	setTimer(SYSTEM_TIMER, 100);
 }
 
+
+
+void notify_password_not_ready(){
+	lcd_fill(0, 150, 240, 170, BLACK);
+	if(electronic_lock_state == IDLE){
+		lcd_show_string_center(0, 150, "PLEASE, ENTER PASSWORD!", GREEN, BLACK, 16, 0);
+	}else{
+		lcd_show_string_center(0, 150, "PLEASE, COMPLETE PASSWORD!", GREEN, BLACK, 16, 0);
+	}
+	password_notify_active = 1;
+	setTimer(TIMER_PASSWORD_NOTIFY, 1000);
+}
+void clear_notify(){
+	if(password_notify_active == 1){
+		lcd_fill(0, 150, 240, 170, BLACK);
+		password_notify_active = 0;
+	}
+}

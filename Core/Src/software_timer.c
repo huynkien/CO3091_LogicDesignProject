@@ -7,7 +7,7 @@
 
 #include "software_timer.h"
 
-#define MAX_TIMER 5
+#define MAX_TIMER 6
 
 uint16_t timer_counter[MAX_TIMER];
 uint8_t  timer_flag[MAX_TIMER];
