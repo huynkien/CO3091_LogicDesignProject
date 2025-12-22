@@ -114,6 +114,7 @@ int main(void)
     /* USER CODE END WHILE */
 	  button_scan();
 	  fsm_electronic_lock_run();
+	  led_7seg_display();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -182,7 +183,7 @@ void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM2) {
 		timerRun();
 	} else if (htim->Instance == TIM4) {
-		led_7seg_display();
+		//led_7seg_display();
 	}
 
 }

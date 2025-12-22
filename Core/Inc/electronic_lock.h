@@ -20,6 +20,8 @@
 extern uint8_t correct_password[4];
 extern uint8_t entered_password[4];
 
+
+
 uint8_t check_password();
 
 void fsm_electronic_lock_run();
@@ -69,6 +71,9 @@ void init_change_password_character();
 void change_password_number();
 void change_password_character();
 
+//Thông báo khi open door mà chưa nhập mk or nhập chưa đủ + clear thông báo.
+void notify_password_not_ready();
+void clear_notify();
 
 
 #endif /* INC_ELECTRONIC_LOCK_H_ */

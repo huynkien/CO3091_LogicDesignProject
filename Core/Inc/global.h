@@ -71,6 +71,8 @@
 #define TIMER_15S				2
 #define TIMER_30S				3
 #define TIMER_10S				4
+#define TIMER_PASSWORD_NOTIFY   5
+
 
 #define TIME_10S				10000
 #define TIME_15S				15000
