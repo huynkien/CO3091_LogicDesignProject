@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "spi.h"
 #include "tim.h"
 #include "gpio.h"
@@ -32,6 +33,7 @@
 #include "picture.h"
 #include "electronic_lock.h"
 #include "buzzer.h"
+#include "touch.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,6 +102,7 @@ int main(void)
   MX_FSMC_Init();
   MX_TIM4_Init();
   MX_TIM13_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   init_system();
 
@@ -114,7 +117,6 @@ int main(void)
     /* USER CODE END WHILE */
 	  button_scan();
 	  fsm_electronic_lock_run();
-	  led_7seg_display();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -170,6 +172,7 @@ void init_system() {
 	timer_init();
 	button_init();
 	lcd_init();
+	touch_init();
 	buzzer_init();
 	lcd_clear(WHITE);
 	led_7seg_init();
@@ -183,7 +186,7 @@ void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM2) {
 		timerRun();
 	} else if (htim->Instance == TIM4) {
-		//led_7seg_display();
+		led_7seg_display();
 	}
 
 }
