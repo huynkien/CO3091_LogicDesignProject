@@ -10,6 +10,8 @@
 
 #include "spi.h"
 #include "gpio.h"
+#include "touch.h"
+#include "lcd.h"
 
 /* Variables */
 uint16_t button_count[16] = {0};
@@ -34,7 +36,24 @@ void button_init() {
 void button_scan() {
 	HAL_GPIO_WritePin(BTN_LOAD_GPIO_Port, BTN_LOAD_Pin, 0);
 	HAL_GPIO_WritePin(BTN_LOAD_GPIO_Port, BTN_LOAD_Pin, 1);
+	__disable_irq();
 	HAL_SPI_Receive(&hspi1, (void*) &button_spi_buffer, 2, 10);
+	__enable_irq();
+
+	touch_Scan();
+	int touch_index = -1;
+	if (touch_IsTouched()) {
+		uint16_t x = touch_GetX();
+		uint16_t y = touch_GetY();
+
+		if (y >= lcddev.height / 2 && x < lcddev.width) {
+			int row = (y - lcddev.height / 2) / (lcddev.height / 8);
+			int col = x / (lcddev.width / 4);
+			if (row >= 0 && row < 4 && col >= 0 && col < 4) {
+				touch_index = row * 4 + col;
+			}
+		}
+	}
 
 	int button_index = 0;
 	uint16_t mask = 0x8000;
@@ -48,10 +67,16 @@ void button_scan() {
 		} else {
 			button_index = 23 - i;
 		}
-		if (button_spi_buffer & mask)
-			button_count[button_index] = 0;
-		else
+
+		int is_pressed = !(button_spi_buffer & mask);
+		if (touch_index == button_index) {
+			is_pressed = 1;
+		}
+
+		if (is_pressed)
 			button_count[button_index]++;
+		else
+			button_count[button_index] = 0;
 		mask = mask >> 1;
 	}
 }
