@@ -7,12 +7,16 @@ Release/
 *.map
 *.hex
 *.bin
+*.ld
+*.launch
 
 # ===== CubeIDE / Eclipse =====
 .settings/
+.settings/.settings/
 .project
 .cproject
 .metadata/
+.metadata/.plugins/
 
 # ===== Generated make files =====
 *.mk
