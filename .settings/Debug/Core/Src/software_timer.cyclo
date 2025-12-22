@@ -1,4 +1,0 @@
-../Core/Src/software_timer.c:15:6:timer_init	1
-../Core/Src/software_timer.c:20:6:setTimer	1
-../Core/Src/software_timer.c:25:9:isTimerExpired	2
-../Core/Src/software_timer.c:32:6:timerRun	4
