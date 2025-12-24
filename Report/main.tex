@@ -365,16 +365,16 @@ Về mặt an toàn, đề tài chú trọng xây dựng các cơ chế \textbf{
 \subsection{Mục tiêu và Chức năng}
 Hệ thống được thiết kế để đáp ứng các mục tiêu sau:
 \begin{itemize}
-    \item Chức năng nhập: các số 0-9 và chữ từ A-F
+    \item Chức năng nhập: các số 0-9 và chữ từ A-F và có thể xóa hoặc clear mật khẩu đang nhập.
     \item Chức năng bảo mật: tự động khóa nếu nhập sai quá 3 lần, chức năng cảnh báo khi quên đóng cửa, khả năng đổi mật khẩu dễ dàng.
-    \item Giao diện quen thuộc và dễ dàng: có màn hình cảm ứng để dễ dàng thao tác hoặc nhập từ nút nhấn.
+    \item Giao diện quen thuộc và dễ dàng thao tác: có màn hình cảm ứng để dễ dàng thao tác hoặc nhập từ nút nhấn.
 \end{itemize}
 
 \subsection{Giới hạn đề tài}
 \begin{itemize}
     \item Sử dụng Kit thí nghiệm BKIT-ARM4 (STM32F407ZGT6).
     \item Mô phỏng thanh toán bằng nút nhấn, buzzer.
-    \item Mô phỏng bằng màn hình cảm ứng.
+    \item Mô phỏng bằng màn hình cảm ứng, module led 7 segment.
     \item Có hai trạng thái chính là mở và đóng cửa.
 \end{itemize}
 \subsection{Giới thiệu về Kit thí nghiệm BKIT-ARM4}
@@ -385,21 +385,40 @@ Hệ thống được thiết kế để đáp ứng các mục tiêu sau:
     \label{fig:placeholder}
 \end{figure}
 
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Pics/stm32.png}
+    \caption{STM32F407ZGT6}
+    \label{fig:placeholder}
+\end{figure}
 
 \newpage
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{Pics/bkit2.png}
-    \caption{Các cổng kết nối và giao tiếp ngoại vi trên BKIT-Arm4}
+    \caption{Communication}
     \label{fig:placeholder}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{Pics/bkit3.png}
-    \caption{Vị trí các linh kiện, công tắc và màn hình hiển thị trên BKIT-Arm4}
+    \caption{Interface}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Pics/sensor.png}
+    \caption{Sensor}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Pics/power.png}
+    \caption{Power}
     \label{fig:placeholder}
 \end{figure}
 
@@ -408,78 +427,115 @@ Hệ thống được thiết kế để đáp ứng các mục tiêu sau:
 \newpage
 \section{CƠ SỞ LÝ THUYẾT VÀ CÔNG CỤ}
 \subsection{Vi điều khiển STM32F407ZGT6 và Kit BKIT-ARM4}
-Kit sử dụng vi điều khiển STM32F407ZGT6 (ARM Cortex-M4 32-bit), hoạt động ở xung nhịp 168MHz. Đặc điểm phần cứng của Kit ảnh hưởng trực tiếp đến giải thuật điều khiển:
-\subsubsection{Mở rộng ngõ vào nút nhấn bằng Shift Register}
-Thay vì kết nối trực tiếp 16 nút nhấn vào 16 chân GPIO gây lãng phí tài nguyên, Kit sử dụng 2 IC ghi dịch 74HC165 (Parallel-In Serial-Out) mắc nối tiếp.\\
+Kit sử dụng vi điều khiển STM32F407ZGT6 (ARM Cortex-M4 32-bit), RAM: 128 KB, Flash: 1024 KB
+\subsubsection{Matrix Button}
+Trong thiết kế của Kit thí nghiệm, các nút nhấn trên ma trận phím không được kết nối trực tiếp với MCU mà thông qua IC 74HC165. Đây là thanh ghi dịch có ngõ vào song song, ngõ ra nối tiếp (PISO -- \textit{Parallel-In Serial-Out}). Mục đích của việc sử dụng 74HC165 là giảm số chân GPIO cần dùng để đọc trạng thái nút nhấn.\\
 
-\textit{Nguyên lý:} Vi điều khiển gửi xung clock để "dịch" trạng thái của 16 nút nhấn về qua giao tiếp \texttt{SPI1}.\\
-
-\textit{Kết nối:}
-\begin{itemize}
-    \item \texttt{SPI1\_MISO} (PA6): Nhận dữ liệu nối tiếp.
-    \item \texttt{SPI1\_SCK} (PA5): Cấp xung dịch.
-    \item \texttt{BTN\_LOAD} (PD3): Chốt dữ liệu song song từ nút nhấn vào thanh ghi dịch.
-\end{itemize}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{Pics/ketnoiIC74HC165.png}
-    \caption{Sơ đồ kết nối IC 74HC165 trên KIT}
+    \includegraphics[width=0.8\linewidth]{Pics/Button_Matrix.png}
+    \caption{Kết nối các phím ma trận}
     \label{fig:placeholder}
 \end{figure}
 
+Nếu kết nối trực tiếp các nút nhấn với MCU, với 16 nút nhấn sẽ cần tới 16 chân của vi điều khiển, gây lãng phí tài nguyên. Để giải quyết, có thể tổ chức các nút theo dạng ma trận (hàng--cột). Khi đó, 16 nút nhấn được ánh xạ thành ma trận $4 \times 4$, tương ứng cần 4 chân điều khiển hàng và 4 chân đọc cột (tổng 8 chân MCU).
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Pics/IC74H.png}
+    \caption{IC 74HC165}
+    \label{fig:placeholder}
+\end{figure}
 
-\newpage
-\subsubsection{Giao tiếp màn hình LCD qua FSMC}
-Màn hình LCD TFT 3.2 inch sử dụng Driver ILI9341. Để đạt tốc độ làm tươi màn hình cao (frame rate), Kit sử dụng giao tiếp \textbf{FSMC (Flexible Static Memory Controller)} thay vì SPI.
+Với phương pháp sử dụng IC 74HC165 trong kit, ta chỉ cần kết nối 3 chân điều khiển/đọc giữa IC và MCU, cụ thể là các chân \textbf{PL}, \textbf{CP}, và \textbf{Q7}. Nguyên lý hoạt động của IC 74HC165 như sau:
 \begin{itemize}
-    \item Nguyên lý: FSMC cho phép vi điều khiển coi màn hình LCD như một vùng nhớ RAM ngoài. Việc ghi dữ liệu ra màn hình đơn giản là ghi vào một địa chỉ bộ nhớ cụ thể.
-    \item Bus dữ liệu: 16-bit song song (D0-D15).
+    \item Khi tín hiệu chân \textbf{PL} ở mức thấp, giá trị từ các ngõ vào \textbf{D0--D7} sẽ được nạp song song vào thanh ghi bên trong IC.
+    \item Khi tín hiệu chân \textbf{PL} ở mức cao và phát hiện cạnh lên tại chân \textbf{CP}, dữ liệu trong thanh ghi sẽ được dịch tuần tự; chân \textbf{Q7} sẽ lần lượt xuất ra các bit tương ứng trong thanh ghi.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Pics/Button_Conf.png}
+    \caption{Config các chân kit thí nghiệm}
+    \label{fig:placeholder}
+\end{figure}
+
+Cơ chế hoạt động của 74HC165 có thể được điều khiển bằng giao tiếp SPI, sử dụng module \textbf{SPI1} trên MCU. Khi đó, tín hiệu \textbf{SCK} và \textbf{MISO} của MCU sẽ lần lượt được kết nối với chân \textbf{CP} và \textbf{Q7} của IC. Lưu ý cần cấu hình chân \textbf{BTN\_LOAD} ở chế độ \texttt{GPIO\_OUTPUT} (nếu chưa được cấu hình).
+
+\subsubsection{LCD Touch Screen}
+Để giao tiếp với màn hình LCD, MCU không điều khiển trực tiếp phần hiển thị mà sẽ giao tiếp với một IC driver trung gian. Trên Kit thí nghiệm BKIT -- Arm 4, driver được sử dụng là \textbf{ILI9341}. MCU chỉ cần ghi các lệnh/dữ liệu theo đúng đặc tả từ nhà sản xuất; IC driver sẽ tự xử lý và điều khiển việc hiển thị lên LCD.
+
+Trong thiết kế của kit, MCU giao tiếp với ILI9341 thông qua \textbf{FSMC} (\textit{Flexible Static Memory Controller}) -- một giao tiếp song song cho phép MCU kết nối với bộ nhớ ngoài/thiết bị ngoại vi tốc độ cao. Nhờ cơ chế bus song song, việc truyền dữ liệu/điều lệnh tới LCD đạt tốc độ nhanh hơn so với các giao tiếp nối tiếp thông thường.
+
+Một số thông số quan trọng khi làm việc với LCD và driver điều khiển LCD:
+\begin{itemize}
+    \item \textbf{Độ phân giải:} $320 \times 240$ pixels.
+    \item \textbf{Chế độ màu:} RGB 16-bit.
+    \item \textbf{Độ rộng bus dữ liệu giao tiếp với driver:} 16-bit.
+\end{itemize}
+
+Theo schematic, cần cấu hình các chân FSMC và thiết lập các thông số thời gian (\textit{timing}) trong giao tiếp. Cụ thể, ta cấu hình FSMC ở chế độ bus dữ liệu 16-bit và thiết lập các tham số thời gian đọc/ghi như sau:
+\begin{itemize}
+    \item Cấu hình các chân dữ liệu \textbf{D[0..15]} và các chân điều khiển tương ứng của FSMC (ví dụ: \textbf{NOE} cho đọc, \textbf{NWE} cho ghi, \textbf{NE} cho chọn chip, \textbf{A0} để phân biệt thanh ghi lệnh/dữ liệu).
+    \item Thiết lập các tham số timing cho chu kỳ truy cập bus, bao gồm:
+    \begin{itemize}
+        \item \textbf{Address Setup Time} (thời gian thiết lập địa chỉ).
+        \item \textbf{Data Setup Time} (thời gian thiết lập dữ liệu).
+        \item \textbf{Bus Turnaround Duration} (thời gian chuyển hướng bus nếu cần).
+    \end{itemize}
+    Các tham số này được chọn phù hợp với yêu cầu timing của ILI9341 nhằm đảm bảo dữ liệu/điều lệnh được chốt đúng và giao tiếp ổn định.
 \end{itemize}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{Pics/ketnoiLCDvoiSTM32quaFSMC.png}
-    \caption{Sơ đồ kết nối LCD với STM32 qua FSMC}
+    \caption{Sơ đồ kết nối LCD với STM32}
     \label{fig:placeholder}
 \end{figure}
 
-\subsection{Module ESP8266 và Giao thức MQTT/HTTP}
-ESP8266 đóng vai trò là Gateway kết nối WiFi.
-\begin{itemize}
-    \item Giao tiếp với STM32 qua UART2 (Baudrate 115200).
-    \item Sử dụng thư viện FirebaseClient để thiết lập kết nối SSL an toàn tới Firebase Realtime Database.
-    \item Dữ liệu được xử lý theo cơ chế Line-by-Line (Đọc từng dòng) để tránh hiện tượng dính gói tin (Packet Merging) khi truyền UART tốc độ cao.
-\end{itemize}
+Trong Kit thí nghiệm, vi điều khiển cần giao tiếp với IC \textbf{Touch Controller XPT2046} trên bo mạch LCD để quản lý các tác vụ liên quan đến màn hình cảm ứng. IC này giao tiếp với vi điều khiển thông qua chuẩn \textbf{SPI} và sử dụng thêm một chân để báo hiệu trạng thái màn hình được chạm (\textit{touch detect}).
 
-\subsection{Cảm biến SHTC3 và Giao thức Modbus RTU}
-Cảm biến SHTC3 đo nhiệt độ và độ ẩm, giao tiếp qua chuẩn RS485 (Half-duplex).\\
+Các chân kết nối được cấu hình như Bảng~\ref{tab:xpt2046_pins}.
 
-\textbf{Giao thức Modbus RTU:}
-\begin{itemize}
-    \item Khung truyền (Frame): \texttt{Slave ID} (1 byte) + \texttt{Function Code} (1 byte) + \texttt{Data} (n byte) + \texttt{CRC16} (2 byte).
-    \item Sử dụng giải thuật \textbf{CRC16 (Cyclic Redundancy Check)} để đảm bảo toàn vẹn dữ liệu, loại bỏ các gói tin bị nhiễu trên đường truyền dài.
-\end{itemize}
+\begin{table}[H]
+\centering
+\caption{Kết nối ngoại vi}
+\label{tab:xpt2046_pins}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Ngoại vi} & \textbf{Chân vi điều khiển} & \textbf{Chức năng} \\ \hline
+T\_CLK  & PG8  & GPIO Output \\ \hline
+T\_CS   & PG7  & GPIO Output \\ \hline
+T\_MISO & PC12 & GPIO Input  \\ \hline
+T\_MOSI & PC9  & GPIO Output \\ \hline
+T\_PEN  & PC8  & GPIO Input  \\ \hline
+\end{tabular}
+\end{table}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Pics/touch_screen_conf.png}
+    \caption{Config touch screen}
+    \label{fig:placeholder}
+\end{figure}
 
+Các chân được dùng để giao tiếp SPI trong phần trên không có chức năng SPI sẵn trên vi điều khiển. Vậy nên ta sẽ config các chân trên là GPIO và sẽ lập trình các chân này theo quy tắc của SPI. Cách làm này thường được gọi là SPI mềm do được
+điều khiển bởi phần mềm. \\
+\\
+Để lập trình điều khiển SPI bằng phần mềm, ta sẽ cần hàm để tạo ra độ trễ với đơn vị micro giây. Vì vậy ta sẽ phải cấu hình thêm timer TIM1 cho công việc này. Để có độ chia là micro giây, tức tần số là 1MHz, với xung clock đầu vào là 84 MHz thì ta sẽ phải cấu hình Prescaler là 84-1.
 
 \newpage
 
 \section{THIẾT KẾ HỆ THỐNG}
 \subsection{Sơ đồ khối hệ thống}
-Hệ thống được chia làm 3 khối chính:
+Hệ thống được chia làm 2 khối chính:
 \begin{enumerate} 
-    \item \textbf{Khối Nhập/Xuất (User Interface):} Ma trận nút nhấn (Input) và màn hình LCD TFT (Output).
-    \item \textbf{Khối Xử lý trung tâm:} STM32F407 điều phối toàn bộ hoạt động (Logic bán hàng + Đọc cảm biến).
-    \item \textbf{Khối Truyền thông \& IoT:}
-    \begin{itemize}
-    \item ESP8266: Cầu nối dữ liệu lên Cloud.
-    \item RS485: Giao tiếp cảm biến công nghiệp.
-    \end{itemize}
+    \item \textbf{Khối Nhập/Xuất (User Interface):} Ma trận nút nhấn (Input) và màn hình LCD Touch Screen (Output).
+    \item \textbf{Khối Xử lý trung tâm:} STM32F407 điều phối toàn bộ hoạt động của ổ khóa điện tử (Idel, lock out, Change password,...).
 \end{enumerate}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{Pics/sodotongquatHeThong.png}
+    \includegraphics[width=1\linewidth]{Pics/FLOW_.png}
     \caption{Sơ đồ khối tổng quát hệ thống}
     \label{fig:placeholder}
 \end{figure}
@@ -489,60 +545,39 @@ Hệ thống được chia làm 3 khối chính:
 \newpage
 
 \subsection{Thiết kế Máy trạng thái (Finite State Machine - FSM)}
-Luồng hoạt động của máy bán hàng được thiết kế dựa trên mô hình máy trạng thái hữu hạn để đảm bảo tính ổn định và tránh treo hệ thống.
+Luồng hoạt động của ổ khóa điện tử được thiết kế dựa trên mô hình máy trạng thái hữu hạn để đảm bảo tính ổn định và bảo mật của hệ thống. 
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{Pics/SoDomaytrangthaiFSM.png}
+    \includegraphics[width=1\linewidth]{Pics/FSM.png}
     \caption{Sơ đồ máy trạng thái (FSM)}
     \label{fig:placeholder}
 \end{figure}
 
 Mô tả chi tiết các trạng thái:
 
-\subsubsection*{1. IDLE (Chờ):}
-Hiển thị menu chào mừng và danh sách sản phẩm.\\
-Hệ thống chờ người dùng nhấn phím chọn món (1-4).\\
-Nếu nhấn giữ phím Admin (>3s) $\to$ Chuyển sang \texttt{ADMIN\_MENU}.
-\subsubsection*{2. ITEM\_SELECTED (Chọn món):}
-Hiển thị tên món và đơn giá.\\
-Chờ người dùng nhập số lượng (phím 1-9).\\
-Có timeout 30s: Nếu không thao tác sẽ tự quay về \texttt{IDLE}.
-\subsubsection*{3. GETTING\_PAYMENT (Nạp tiền):}
-Hiển thị tổng tiền cần thanh toán.\\
-Nhận tiền giả lập từ các phím (5k, 10k, 20k, 50k).\\
-Cập nhật số tiền đã nạp lên màn hình.
-\subsubsection*{4. VALIDATING (Kiểm tra):}
-So sánh \texttt{Tiền đã nạp} $\ge$ \texttt{Tổng tiền}.\\
-Nếu đủ tiền $\to$ Chuyển sang \texttt{DISPENSING}.\\
-Nếu thiếu tiền $\to$ Báo lỗi và quay lại \texttt{GETTING\_PAYMENT}.
+\subsubsection*{1. IDLE (DOOR CLOSE):}
+Cửa ở trạng thái đóng và chờ nhập mật khẩu\\
+Có thể nhập mật khẩu bằng nút nhấn hoặc màn hình cảm ứng
+\subsubsection*{2. DOOR OPEN}
+Có thể đóng mở cửa tùy ý nhiều lần\\
+Ấn nút ổ khóa để khóa cửa lại\\
+Nếu sau 10 giây cửa chưa được đóng thì buzzer sẽ cảnh báo \\
+Nếu chỉ đóng mà chưa khóa thì sau 10 giây sẽ tự khóa và chuyển về chế độ IDLE.
+\subsubsection*{3. LOCK OUT}
+Nếu nhập mật khẩu  sai 3 lần thì sẽ bị lock out và không được làm gì trong 60 giây\\
+Nếu vẫn tiếp tục nhập sai hơn 3 lần thì thời gian lock out sẽ tăng gắp đôi.
+\subsubsection*{4. CHANGE PASSWORD}
+Nhập lại mật khẩu cũ, sau đó nhập mật khẩu mới. \\
+Nếu sai mật khẩu cũ hoặc mật khẩu mới không khớp sau sẽ yêu cầu nhập lại. \\
+Nếu nhập sai quá 3 lần thì sẽ chuyển sang chế độ lock out.
 
-
-
-\newpage
-
-\subsubsection*{5. DISPENSING (Trả hàng):}
-Thực hiện trừ kho: \texttt{inventory = inventory - qty}.\\
-Gửi lệnh cập nhật lên IoT (ESP8266).\\
-Kích hoạt hiệu ứng LED/Servo để mô phỏng trả hàng.
-\subsubsection*{6. RETURNING\_CHANGE (Trả tiền thừa):}
-Tính toán tiền thừa: \texttt{Change = MoneyEntered - TotalCost}.\\
-Hiển thị số tiền trả lại.\\
-Sau 3s $\to$ Quay về \texttt{IDLE}.
-\subsubsection*{7. ADMIN\_MODE (Các trạng thái Admin):}
-\texttt{ADMIN\_MENU}: Chọn sửa Giá hoặc sửa Số lượng.\\
-\texttt{ADMIN\_EDIT\_ITEM}: Chọn món cần sửa.\\
-\texttt{ADMIN\_SET\_PRICE / QUANTITY}: Nhập giá trị mới và Lưu.
-
-\subsection{Thiết kế Giao thức truyền thông (Protocol)}
-Để đồng bộ dữ liệu giữa STM32 và ESP8266, một giao thức định danh gói tin đơn giản được thiết lập:\\
-
-\textbf{Gói tin Môi trường (Environment):} \texttt{ENV:Temp,Humi$\textbackslash$n}\\
-Ví dụ: \texttt{ENV:285,650} (Tương ứng 28.5°C, 65.0\%RH - Dữ liệu nhân 10 để gửi số nguyên).\\
-
-\textbf{Gói tin Kho hàng (Stock):} \texttt{STK:ID,Qty$\textbackslash$n}\\
-Ví dụ: \texttt{STK:0,10} (Món ID 0 còn 10 cái).
-
-
+\subsubsection*{5. NUM AND CHAR KEYBOARD}
+Có 2 chế độ của bàn phím là: 
+\begin{itemize}
+    \item Num Keyboard : Nhập các số từ 0-9.
+    \item Char Keyboard: Nhập chữ A-F
+\end{itemize}
 
 \newpage
 
